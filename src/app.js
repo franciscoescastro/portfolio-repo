@@ -1,33 +1,65 @@
-const express = require("express");
-const cors = require("cors");
+const express = require("express")
+const { uuid } = require("uuidv4")
+const Repository = require("./models/Repository")
 
-// const { uuid } = require("uuidv4");
+const app = express()
 
-const app = express();
+app.use(express.json())
 
-app.use(express.json());
-app.use(cors());
-
-const repositories = [];
+const repositories = {}
 
 app.get("/repositories", (request, response) => {
-  // TODO
-});
+  return response.json(Object.values(repositories))
+})
 
 app.post("/repositories", (request, response) => {
-  // TODO
-});
+  const { title, url, techs } = request.body
+  const repository = new Repository(uuid(), title, url, techs)
+
+  repositories[repository.id] = repository
+  
+  return response.json(repository)
+})
 
 app.put("/repositories/:id", (request, response) => {
-  // TODO
-});
+  const { title, url, techs } = request.body
+  const { id } = request.params
 
-app.delete("/repositories/:id", (req, res) => {
-  // TODO
-});
+  const repository = repositories[id]
+
+  if (!repository) {
+    return response.status(400).json({ error: "Repository not found" })
+  }
+
+  repository.update(title, url, techs)
+
+  return response.json(repository)
+})
+
+app.delete("/repositories/:id", (request, response) => {
+  const { id } = request.params
+
+  if (!repositories[id]) {
+    return response.status(400).json({ error: "Repository not found" })
+  }
+
+  delete repositories[id]
+
+  return response.status(204).send()
+})
 
 app.post("/repositories/:id/like", (request, response) => {
-  // TODO
-});
+  const { id } = request.params
 
-module.exports = app;
+  const repository = repositories[id]
+
+  if (!repository) {
+    return response.status(400).json({ error: "Repository not found" })
+  }
+
+  repository.like()
+
+  return response.json(repository)
+})
+
+module.exports = app
